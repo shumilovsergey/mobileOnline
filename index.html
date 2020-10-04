@@ -1,0 +1,170 @@
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css"
+    />
+    <link
+      href="https://fonts.googleapis.com/icon?family=Material+Icons"
+      rel="stylesheet"
+    />
+  </head>
+
+  <body>
+    <!-- NAVBAR -->
+
+    <nav>
+      <div class="nav-wrapper blue lighten-2">
+        <a href="#" class="brand-logo center">TODOlist</a>
+      </div>
+    </nav>
+
+    <!-- INPUT BLOCK -->
+
+    <div class="row">
+      <div class="input-field col s9">
+        <input value="" id="TaskImput" type="text" class="validate" />
+        <label class="active" for="first_name2">новая запись</label>
+      </div>
+
+      <div class="input-field col s3">
+        <a
+          class="btn-floating btn-large waves-effect waves-light blue darken-1"
+          onclick="createTask()"
+          id="addButton"
+          ><i class="material-icons">add</i></a
+        >
+      </div>
+    </div>
+
+    <!-- TASK LIST -->
+
+    <ul class="collection with-header" id="TaskListContainer"></ul>
+    <style>
+      .strikeItem {
+        text-decoration: line-through !important;
+      }
+    </style>
+    <script>
+      const TaskListContainer = document.getElementById("TaskListContainer");
+      const localItems = JSON.parse(localStorage.getItem("items"));
+      let TaskItems = [];
+      if (localItems) {
+        localItems.forEach((localItem) => {
+          TaskItems.push(localItem);
+        });
+      }
+
+      document.addEventListener("DOMContentLoaded", renderList());
+      document.addEventListener("keydown", function (event) {
+        if (event.keyCode === 13) {
+          createTask();
+        }
+      });
+
+      function renderList() {
+        let tasksHTML = "";
+
+        TaskItems.forEach((TaskItem, i) => {
+          let isComplete = TaskItem.isComplete ? "strikeItem" : "";
+
+          tasksHTML += `
+            <li class="collection-item">
+              <div id="${TaskItem.id}">
+                <span class ="${isComplete}" onclick="toggleCompleteTask('${TaskItem.id}')">${TaskItem.text}</span>
+                <a href="#!" class="secondary-content">
+                  <button class="btn-small blue darken-1" onclick="editTask('${TaskItem.id}')">
+                    <i class="material-icons">border_color</i>
+                  </button>
+
+                  <button class="btn-small blue darken-1" onclick="deleteTask('${TaskItem.id}')">
+                    <i class="material-icons">delete</i>
+                  </button>
+
+
+                </a>
+                <div data-action="edit"></div>
+              </div>
+
+            </li>`;
+        });
+        TaskListContainer.innerHTML = tasksHTML;
+      }
+      function createTask() {
+        const text = document.getElementById("TaskImput").value;
+        if (text) {
+          const task = {
+            id: "_" + Math.random().toString(36).substr(2, 9),
+            text: text,
+            isComplete: false,
+          };
+
+          TaskItems.push(task);
+          saveTasksLocal();
+          document.getElementById("TaskImput").value = "";
+          renderList();
+        } else {
+          return;
+        }
+      }
+
+      function deleteTask(id) {
+        TaskItems.forEach((TaskItem, i) => {
+          if (TaskItem.id == id) {
+            TaskItems.splice(i, 1);
+          }
+        });
+
+        saveTasksLocal();
+        renderList();
+        return;
+      }
+
+      function editTask(id) {
+        const taskDiv = document.getElementById(id);
+        const TaskItem = TaskItems.find((TaskItem) => TaskItem.id == id);
+
+        if (taskDiv && TaskItem) {
+          const editDiv = taskDiv.querySelector("div[data-action=edit]");
+          editDiv.innerHTML = `
+            <input type="text" value="${TaskItem.text}" id="input-${TaskItem.id}"/>
+            <a class="btn-small green" data-id="${TaskItem.id}" id="edit-${TaskItem.id}">
+             save
+            </a>
+          `;
+          const btnEditTask = document.getElementById(`edit-${TaskItem.id}`);
+          btnEditTask.addEventListener("click", (event) => {
+            const id = event.target.dataset.id;
+            const newText = document.getElementById(`input-${TaskItem.id}`)
+              .value;
+            TaskItems.forEach((Taskitem) => {
+              if (TaskItem.id == id) {
+                TaskItem.text = newText;
+                return;
+              }
+            });
+            saveTasksLocal();
+            renderList();
+          });
+        }
+      }
+      function toggleCompleteTask(id) {
+        TaskItems.forEach((TaskItem, i) => {
+          if (TaskItem.id == id) {
+            TaskItem.isComplete = !TaskItem.isComplete;
+          }
+        });
+
+        saveTasksLocal();
+        renderList();
+        return;
+      }
+
+      function saveTasksLocal() {
+        localStorage.setItem("items", JSON.stringify(TaskItems));
+      }
+    </script>
+  </body>
+</html>
